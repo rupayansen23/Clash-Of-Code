@@ -14,7 +14,13 @@ const register = async (req, resp) =>{
         const user = await User.create(req.body);
         const token = jwt.sign({_id:user._id, emailId:emailId, role:'user'}, process.env.JWT_KEY, {expiresIn:60*60});
         resp.cookie('token', token, {maxAge: 60*60*1000});
-        resp.status(201).send("User registered successfully")
+        const response = {
+            firstName : user.firstName,
+            lastName : user.lastName,
+            emailId : user.emailId,
+            userId : user._id
+        }
+        resp.status(201).send(response);
     }
     catch(err) {
         resp.status(400).send("Error : "+err);
@@ -36,7 +42,13 @@ const login = async (req, resp) => {
         }
         const token = jwt.sign({_id:user._id, emailId:emailId, role:user.role}, process.env.JWT_KEY, {expiresIn:60*60});
         resp.cookie('token', token, {maxAge: 60*60*1000});
-        resp.status(200).send("Logged in successfull")
+        const response = {
+            firstName : user.firstName,
+            lastName : user.lastName,
+            emailId : user.emailId,
+            userId : user._id
+        }
+        resp.status(200).send(response);
 
     }
     catch(err) {
