@@ -1,6 +1,10 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { negative, z } from 'zod';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Navigate, useNavigate } from 'react-router';
+import { registerUser } from '../authSlice';
 
 const signupSchema = z.object({
     firstName: z.string().min(3, "Minimum character should be 3"),
@@ -9,16 +13,27 @@ const signupSchema = z.object({
 });
 
 export default function Signup() {
+
+    const {isAuthenticated, loding, error} = useSelector((state)=>state.auth);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+
+    console.log("Is Authenticated value : "+isAuthenticated);
+    
     const {
         register,
         handleSubmit,
         formState: { errors },
     } = useForm({ resolver: zodResolver(signupSchema) });
 
-    const onSubmit = (data) => {
-    console.log(data);
+    useEffect(()=>{
+        if(isAuthenticated) {
+            navigate('/')
+        }
+    }, [isAuthenticated, navigate])
 
-    // Backend data ko send kar dena chaiye?
+    const onSubmit = (data) => {
+        dispatch(registerUser(data));
     };
 
     return (

@@ -8,22 +8,21 @@ const register = async (req, resp) =>{
 
     try{
         validate(req.body);
-        const {firstName, lastName, emailId, password} = req.body;
+        const {firstName, emailId, password} = req.body;
         req.body.password = await bcrypt.hash(password, 10);
-        req.body.role = 'admin';
+        req.body.role = 'user';
         const user = await User.create(req.body);
         const token = jwt.sign({_id:user._id, emailId:emailId, role:'user'}, process.env.JWT_KEY, {expiresIn:60*60});
         resp.cookie('token', token, {maxAge: 60*60*1000});
         const response = {
             firstName : user.firstName,
-            lastName : user.lastName,
             emailId : user.emailId,
             userId : user._id
         }
         resp.status(201).send(response);
     }
     catch(err) {
-        resp.status(400).send("Error : "+err);
+        resp.status(400).send("Error Hello: "+err);
     }
 }
 

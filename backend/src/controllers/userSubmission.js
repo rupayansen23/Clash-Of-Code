@@ -84,9 +84,23 @@ const submitCode = async(req, resp) => {
         
         await submittedResult.save();
 
-        if(!req.user.problemSolved.includes(problemId)) {
-            req.user.problemSolved.push(problemId);
-            await req.user.save();
+        // if(!req.user.problemSolved.includes(problemId)) {
+        //     req.user.problemSolved.push(problemId);
+        //     await req.user.save();
+        // }
+
+        // ✅ ONLY ADD TO SOLVED PROBLEMS IF ACCEPTED
+        if (status === 'accepted') {
+            const problemIdStr = problemId.toString();
+            const alreadySolved = req.user.problemSolved.some(
+                id => id.toString() === problemIdStr
+            );
+            
+            if (!alreadySolved) {
+                req.user.problemSolved.push(problemId);
+                await req.user.save();
+                console.log(`✅ User ${userId} solved problem ${problemId}`);
+            }
         }
 
         resp.status(201).send(submittedResult);

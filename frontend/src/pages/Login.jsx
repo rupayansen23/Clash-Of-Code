@@ -15,8 +15,7 @@ export default function Login() {
     } = useForm({ resolver: zodResolver(signupSchema) });
 
     const onSubmit = (data) => {
-    console.log(data);
-
+        console.log(data);
     // Backend data ko send kar dena chaiye?
     };
 
