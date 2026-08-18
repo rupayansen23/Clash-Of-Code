@@ -41,7 +41,7 @@ export const logoutUser = createAsyncThunk(
     'auth/logout',
     async (_, { rejectWithValue }) => {
         try {
-            await axiosClient.post('/logout');
+            await axiosClient.post('user/logout');
             return null;
         } catch (error) {
             return rejectWithValue(error);
@@ -58,6 +58,10 @@ const authSlice = createSlice({
         error: null
     },
     reducers: {
+        clearError: (state) => {
+            state.error = null;
+        }
+
     },
     extraReducers: (builder) => {
         builder
@@ -132,4 +136,5 @@ const authSlice = createSlice({
     }
 });
 
+export const {clearError} = authSlice.actions
 export default authSlice.reducer;

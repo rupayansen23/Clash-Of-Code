@@ -4,7 +4,7 @@ import { negative, z } from 'zod';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, useNavigate } from 'react-router';
-import { registerUser } from '../authSlice';
+import { registerUser, clearError } from '../authSlice';
 
 const signupSchema = z.object({
     firstName: z.string().min(3, "Minimum character should be 3"),
@@ -28,9 +28,16 @@ export default function Signup() {
 
     useEffect(()=>{
         if(isAuthenticated) {
-            navigate('/')
+            navigate('/', {replace : true})
         }
     }, [isAuthenticated, navigate])
+
+     // Clear errors when component unmounts
+    useEffect(() => {
+        return () => {
+            dispatch(clearError());
+        };
+    }, [dispatch]);
 
     const onSubmit = (data) => {
         dispatch(registerUser(data));

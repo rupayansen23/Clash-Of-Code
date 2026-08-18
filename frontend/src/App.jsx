@@ -9,13 +9,29 @@ import { checkAuth } from './authSlice'
 
 function App() {
 
-  const {isAuthenticated} = useSelector((state)=>state.auth)
+  const {isAuthenticated, loading} = useSelector((state)=>state.auth)
   const dispatch = useDispatch();
+  const [authChecked, setAuthChecked] = useState(false);
 
-  useEffect(()=>{
-    dispatch(checkAuth())
-  }, [dispatch])
+  useEffect(() => {
+        const checkAuthStatus = async () => {
+            await dispatch(checkAuth());
+            setAuthChecked(true);
+        };
+        checkAuthStatus();
+    }, [dispatch]);
 
+  // Show loading spinner while checking authentication
+    if (!authChecked || loading) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <div className="text-center">
+                    <div className="loading loading-spinner loading-lg"></div>
+                    <p className="mt-4 text-gray-500">Loading...</p>
+                </div>
+            </div>
+        );
+    }
 
   return (
     <>
