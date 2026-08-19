@@ -100,7 +100,7 @@ export default function Signup() {
                     type="submit"
                     className="btn btn-primary"
                 >
-                    Sign Up
+                    {loding ? 'Signing Up...' : 'Sign Up'}
                 </button>
                 </div>
             </form>

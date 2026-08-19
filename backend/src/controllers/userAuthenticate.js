@@ -19,7 +19,10 @@ const register = async (req, resp) =>{
             emailId : user.emailId,
             userId : user._id
         }
-        resp.status(201).send(response);
+        resp.status(201).json({
+            user : response,
+            message : "valid_user"
+        });
     }
     catch(err) {
         resp.status(400).send("Error Hello: "+err);
