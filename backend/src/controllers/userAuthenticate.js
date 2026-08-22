@@ -50,7 +50,10 @@ const login = async (req, resp) => {
             emailId : user.emailId,
             userId : user._id
         }
-        resp.status(200).send(response);
+        resp.status(200).json({
+            user : response,
+            message : "valid user"
+        });
 
     }
     catch(err) {
