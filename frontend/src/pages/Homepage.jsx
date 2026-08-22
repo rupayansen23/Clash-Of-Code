@@ -29,10 +29,8 @@ export default function Homepage() {
 
         const fetchSolvedProblems = async () => {
             try {
-                // const { problemSolved : solvedProblemByUser } = await axiosClient.get('/problem/problemSolvedByUser');
-                const user = await axiosClient.get('/problem/problemSolvedByUser');
-                const problemSolved = user.problemSolved;
-                console.log(problemSolved)
+                const response = await axiosClient.get('/problem/problemSolvedByUser');
+                const problemSolved = response?.data?.problemSolved || [];
                 setSolvedProblems(problemSolved);
             } catch (error) {
                 console.error('Error fetching solved problems:', error);
@@ -61,7 +59,7 @@ export default function Homepage() {
         {/* Navigation Bar */}
         <nav className="navbar bg-base-100 shadow-lg px-4">
             <div className="flex-1">
-            <NavLink to="/" className="btn btn-ghost text-xl">LeetCode</NavLink>
+            <NavLink to="/" className="btn btn-ghost text-xl">Clash Of Code</NavLink>
             </div>
             <div className="flex-none gap-4">
             <div className="dropdown dropdown-end">
