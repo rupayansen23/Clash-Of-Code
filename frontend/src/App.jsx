@@ -6,10 +6,12 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import { useDispatch, useSelector } from 'react-redux'
 import { checkAuth } from './authSlice'
+import AdminPanel from './pages/AdminPanel'
+import ProblemCodeEditor from './pages/ProblemCodeEditor'
 
 function App() {
 
-  const {isAuthenticated, loading} = useSelector((state)=>state.auth)
+  const {isAuthenticated, loading, user} = useSelector((state)=>state.auth)
   const dispatch = useDispatch();
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -39,6 +41,11 @@ function App() {
         <Route path='/' element={isAuthenticated ? <HomePage></HomePage>: <Navigate to="/signup"></Navigate>}></Route>
         <Route path="/login" element={isAuthenticated?<Navigate to="/"></Navigate>:<Login></Login>}></Route>
         <Route path="/signup" element={isAuthenticated?<Navigate to="/"></Navigate>:<Signup></Signup>}></Route>
+        <Route path="/problem/:id" element={isAuthenticated?<ProblemCodeEditor></ProblemCodeEditor>:<Login></Login>}></Route>
+        <Route path="/admin" element={
+          isAuthenticated && user.role === 'admin'?
+          <AdminPanel></AdminPanel> : <Navigate to="/"></Navigate>
+          }></Route>
       </Routes>
     </>
   )

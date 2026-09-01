@@ -119,6 +119,8 @@ const runCode = async(req, resp) => {
         const userId = req.user._id;
         const problemId = req.params.id;
 
+        console.log(problemId);
+
         const {code, language} = req.body;
         if(!userId || !problemId || !code || !language) {
             return resp.status(400).send("Some field is missing");

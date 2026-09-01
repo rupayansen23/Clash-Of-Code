@@ -6,7 +6,6 @@ const client = createClient({
     socket: {
         host: 'redis-14977.crce263.ap-south-1-1.ec2.cloud.redislabs.com',
         port: 14977,
-        keepAlive: 30000
     }
 });
 
