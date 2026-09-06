@@ -10,7 +10,7 @@ import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
 import axiosClient from "../utils/axiosClient";
 
-// Zod Schema for Custom Test Case Form
+// --- Zod Schema for Custom Test Case Form ---
 const testCaseSchema = z.object({
     input: z.string().min(1, "Input is required"),
     expected: z.string().min(1, "Expected output is required"),
@@ -28,18 +28,25 @@ const decodeBase64 = (str) => {
 export default function ProblemCodeEditor() {
     const { id } = useParams();
 
-    // --- State ---
+    // --- Core State ---
     const [problem, setProblem] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [language, setLanguage] = useState("javascript");
-    const [initialCode, setInitialCode] = useState(""); // used as defaultValue for editor
+    const [language, setLanguage] = useState("cpp");
+    const [initialCode, setInitialCode] = useState("");
     const [testCases, setTestCases] = useState([]);
     const [results, setResults] = useState(null);
     const [isRunning, setIsRunning] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeBottomTab, setActiveBottomTab] = useState("testcases");
 
-    // --- Editor ref ---
+    // --- Left Panel Tabs ---
+    const [activeLeftTab, setActiveLeftTab] = useState("description");
+    const [submissions, setSubmissions] = useState([]);
+    const [submissionsLoading, setSubmissionsLoading] = useState(false);
+    const [solutions, setSolutions] = useState(null);
+    const [activeSolutionTab, setActiveSolutionTab] = useState("cpp");
+    const [solutionsLoading, setSolutionsLoading] = useState(false);
+
     const editorRef = useRef(null);
 
     // --- React Hook Form for Custom Test Case ---
@@ -52,32 +59,7 @@ export default function ProblemCodeEditor() {
         resolver: zodResolver(testCaseSchema),
     });
 
-    // --- 1. Fetch Problem Data ---
-    useEffect(() => {
-        setLoading(true);
-        const fetchProblem = async () => {
-            try {
-                const { data } = await axiosClient.get(`problem/getProblemById/${id}`);
-                setProblem(data);
-                setTestCases(
-                    data.visibleTestCases?.map((tc) => ({
-                        input: tc.input,
-                        expected: tc.output,
-                    })) || []
-                );
-                // Set initial code after problem loads (editor isn't mounted yet)
-                const starter = getStarterCode(data, language);
-                setInitialCode(starter);
-                setLoading(false);
-            } catch (error) {
-                alert("Failed to fetch problem: " + error);
-                setLoading(false);
-            }
-        };
-        fetchProblem();
-    }, [id]);
-
-    // Helper to extract starter code for a given language
+    // --- Helper to get starter code ---
     const getStarterCode = (problemData, lang) => {
         if (!problemData?.startCode) return "";
         const languageMap = {
@@ -91,6 +73,31 @@ export default function ProblemCodeEditor() {
         );
         return starter?.initialCode || "";
     };
+
+    // --- 1. Fetch Problem Data ---
+    useEffect(() => {
+        setLoading(true);
+        const fetchProblem = async () => {
+            try {
+                const { data } = await axiosClient.get(`problem/getProblemById/${id}`);
+                console.log(data);
+                setProblem(data);
+                setTestCases(
+                    data.visibleTestCases?.map((tc) => ({
+                        input: tc.input,
+                        expected: tc.output,
+                    })) || []
+                );
+                const starter = getStarterCode(data, language);
+                setInitialCode(starter);
+                setLoading(false);
+            } catch (error) {
+                alert("Failed to fetch problem: " + error);
+                setLoading(false);
+            }
+        };
+        fetchProblem();
+    }, [id]);
 
     // --- 2. Update Editor when Language Changes ---
     useEffect(() => {
@@ -113,12 +120,46 @@ export default function ProblemCodeEditor() {
     };
 
     // --- 4. Editor onMount ---
-    const handleEditorDidMount = (editor, monaco) => {
+    const handleEditorDidMount = (editor) => {
         editorRef.current = editor;
-        // If initialCode was set before mount, apply it (should already be in defaultValue)
     };
 
-    // --- 5. Run Handler ---
+    // --- 5. Fetch Submissions when tab opens ---
+    const fetchSubmissions = async () => {
+        if (submissions.length > 0) return;
+        setSubmissionsLoading(true);
+        try {
+            const { data } = await axiosClient.get(`submission/user/submissions/${id}`);
+            setSubmissions(data);
+        } catch (error) {
+            console.error("Failed to fetch submissions:", error);
+        }
+        setSubmissionsLoading(false);
+    };
+
+    // --- 6. Fetch Solutions when tab opens ---
+    const fetchSolutions = async () => {
+        if (solutions) return;
+        setSolutionsLoading(true);
+        try {
+            // Just set solutions loading to false - the data is already in problem
+            // Set a default active tab if there are solutions
+            if (problem?.referenceSolution && problem.referenceSolution.length > 0) {
+                // Set first solution as active by default
+                const firstSolution = problem.referenceSolution[0];
+                setActiveSolutionTab(firstSolution.language.toLowerCase());
+                setSolutions({ available: true });
+            } else {
+                setSolutions({ available: false });
+            }
+        } catch (error) {
+            console.error("Failed to load solutions:", error);
+            setSolutions({ available: false });
+        }
+        setSolutionsLoading(false);
+    };
+
+    // --- 7. Handlers for Run and Submit ---
     const onRun = async () => {
         const code = editorRef.current?.getValue() || "";
         if (!code.trim()) return;
@@ -144,7 +185,7 @@ export default function ProblemCodeEditor() {
                 output: apiResults.length > 0
                     ? `${apiResults.filter(r => r.status?.description === "Accepted").length} passed, ${apiResults.filter(r => r.status?.description !== "Accepted").length} failed`
                     : "No test cases executed",
-                results: apiResults.map((r, index) => ({
+                results: apiResults.map((r) => ({
                     input: decodeURIComponent(escape(atob(r.stdin || ""))),
                     expected: decodeURIComponent(escape(atob(r.expected_output || ""))),
                     actual: decodeURIComponent(escape(atob(r.stdout || ""))),
@@ -169,7 +210,6 @@ export default function ProblemCodeEditor() {
         setIsRunning(false);
     };
 
-    // --- 6. Submit Handler ---
     const onSubmitCode = async () => {
         const code = editorRef.current?.getValue() || "";
         if (!code.trim()) return;
@@ -212,14 +252,14 @@ export default function ProblemCodeEditor() {
         setIsSubmitting(false);
     };
 
-    // --- 7. Add Custom Test Case ---
+    // --- 8. Add Custom Test Case ---
     const onAddCustomTestCase = (data) => {
         setTestCases((prev) => [...prev, { input: data.input, expected: data.expected }]);
         reset();
         document.getElementById("custom_test_modal").close();
     };
 
-    // --- 8. Helpers ---
+    // --- 9. Helpers ---
     const getDifficultyColor = (diff) => {
         switch (diff?.toLowerCase()) {
             case "easy": return "badge-success";
@@ -229,7 +269,7 @@ export default function ProblemCodeEditor() {
         }
     };
 
-    // --- 9. Loading & Error States ---
+    // --- 10. Loading & Error States ---
     if (loading) {
         return (
             <div className="flex items-center justify-center h-screen">
@@ -246,42 +286,229 @@ export default function ProblemCodeEditor() {
         );
     }
 
-    // --- 10. Main Render ---
+    // --- 11. Main Render ---
     return (
         <div className="flex h-screen overflow-hidden bg-base-200">
-            {/* LEFT PANEL: Description (unchanged) */}
-            <div className="w-1/2 h-full overflow-y-auto p-6 bg-base-100 border-r border-base-300">
-                <div className="flex items-center gap-3 mb-4">
-                    <h1 className="text-3xl font-bold">{problem.title}</h1>
-                    <div className={`badge ${getDifficultyColor(problem.difficulty)} text-white`}>
-                        {problem.difficulty}
-                    </div>
+            {/* ========== LEFT PANEL with Tabs ========== */}
+            <div className="w-1/2 h-full flex flex-col bg-base-100 border-r border-base-300">
+                {/* Tab Bar */}
+                <div className="flex border-b border-base-300 bg-base-200">
+                    {["description", "submissions", "solutions"].map((tab) => (
+                        <button
+                            key={tab}
+                            className={`px-4 py-2 text-sm font-medium capitalize ${activeLeftTab === tab
+                                ? "border-b-2 border-primary text-primary"
+                                : "text-base-content/70 hover:text-base-content"
+                                }`}
+                            onClick={() => {
+                                setActiveLeftTab(tab);
+                                if (tab === "submissions") fetchSubmissions();
+                                if (tab === "solutions") fetchSolutions();
+                            }}
+                        >
+                            {tab}
+                        </button>
+                    ))}
                 </div>
-                <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        rehypePlugins={[rehypeHighlight]}
-                        components={{
-                            code({ node, inline, className, children, ...props }) {
-                                const match = /language-(\w+)/.exec(className || "");
-                                return !inline && match ? (
-                                    <pre className="bg-base-300 p-4 rounded-lg overflow-x-auto">
-                                        <code className={className} {...props}>{children}</code>
-                                    </pre>
-                                ) : (
-                                    <code className="bg-base-300 px-1 py-0.5 rounded text-error" {...props}>
-                                        {children}
-                                    </code>
-                                );
-                            },
-                        }}
-                    >
-                        {problem.description}
-                    </ReactMarkdown>
+
+                {/* Tab Content */}
+                <div className="flex-1 overflow-y-auto p-6">
+                    {/* --- DESCRIPTION TAB --- */}
+                    {activeLeftTab === "description" && (
+                        <>
+                            <div className="flex items-center gap-3 mb-4">
+                                <h1 className="text-3xl font-bold">{problem.title}</h1>
+                                <div className={`badge ${getDifficultyColor(problem.difficulty)} text-white`}>
+                                    {problem.difficulty}
+                                </div>
+                            </div>
+
+                            <div className="prose prose-sm max-w-none dark:prose-invert">
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    rehypePlugins={[rehypeHighlight]}
+                                    components={{
+                                        code({ node, inline, className, children, ...props }) {
+                                            const match = /language-(\w+)/.exec(className || "");
+                                            return !inline && match ? (
+                                                <pre className="bg-base-300 p-4 rounded-lg overflow-x-auto">
+                                                    <code className={className} {...props}>{children}</code>
+                                                </pre>
+                                            ) : (
+                                                <code className="bg-base-300 px-1 py-0.5 rounded text-error" {...props}>
+                                                    {children}
+                                                </code>
+                                            );
+                                        },
+                                    }}
+                                >
+                                    {problem.description}
+                                </ReactMarkdown>
+                            </div>
+
+                            {/* Visible Test Cases */}
+                            {testCases.length > 0 && (
+                                <div className="mt-8">
+                                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Examples
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {testCases.map((tc, idx) => (
+                                            <div key={idx} className="bg-base-200 rounded-lg p-4 border border-base-300">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="badge badge-ghost badge-sm">Case {idx + 1}</span>
+                                                </div>
+                                                <div className="font-mono text-sm space-y-1">
+                                                    <div>
+                                                        <span className="font-semibold text-base-content/70">Input: </span>
+                                                        <code className="bg-base-300 px-2 py-0.5 rounded text-sm">{tc.input}</code>
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-semibold text-base-content/70">Output: </span>
+                                                        <code className="bg-base-300 px-2 py-0.5 rounded text-sm">{tc.expected}</code>
+                                                    </div>
+                                                    {problem.visibleTestCases?.[idx]?.explanation && (
+                                                        <div>
+                                                            <span className="font-semibold text-base-content/70">Explanation: </span>
+                                                            <span className="text-sm">{problem.visibleTestCases[idx].explanation}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {/* --- SUBMISSIONS TAB --- */}
+                    {activeLeftTab === "submissions" && (
+                        <div>
+                            <h2 className="text-2xl font-bold mb-4">Your Submissions</h2>
+                            {submissionsLoading ? (
+                                <div className="flex justify-center py-10">
+                                    <span className="loading loading-spinner loading-md"></span>
+                                </div>
+                            ) : submissions.length === 0 ? (
+                                <div className="text-base-content/60 text-center py-10">
+                                    No submissions yet for this problem.
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="table table-sm table-zebra">
+                                        <thead>
+                                            <tr>
+                                                <th>Status</th>
+                                                <th>Language</th>
+                                                <th>Runtime</th>
+                                                <th>Memory</th>
+                                                <th>Submitted At</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {submissions.map((sub, idx) => (
+                                                <tr key={idx}>
+                                                    <td>
+                                                        <span className={`badge ${sub.status === "accepted" ? "badge-success" : "badge-error"} badge-sm`}>
+                                                            {sub.status}
+                                                        </span>
+                                                    </td>
+                                                    <td>{sub.language}</td>
+                                                    <td>{sub.runtime ? `${sub.runtime}s` : "—"}</td>
+                                                    <td>{sub.memory ? `${(sub.memory / 1024).toFixed(1)} MB` : "—"}</td>
+                                                    <td>{new Date(sub.createdAt).toLocaleString()}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* --- SOLUTIONS TAB --- */}
+                    {activeLeftTab === "solutions" && (
+                        <div>
+                            <h2 className="text-2xl font-bold mb-4">Editorial Solution</h2>
+                            {solutionsLoading ? (
+                                <div className="flex justify-center py-10">
+                                    <span className="loading loading-spinner loading-md"></span>
+                                </div>
+                            ) : (
+                                <div>
+                                    {/* Language Tabs for Solutions */}
+                                    <div className="flex border-b border-base-300 mb-4">
+                                        {problem?.referenceSolution?.map((solution, idx) => {
+                                            // Map backend language names to frontend display names
+                                            const displayName = solution.language;
+                                            const langKey = solution.language.toLowerCase();
+                                            return (
+                                                <button
+                                                    key={idx}
+                                                    className={`px-4 py-2 text-sm font-medium capitalize ${activeSolutionTab === langKey
+                                                            ? "border-b-2 border-primary text-primary"
+                                                            : "text-base-content/70 hover:text-base-content"
+                                                        }`}
+                                                    onClick={() => setActiveSolutionTab(langKey)}
+                                                >
+                                                    {displayName}
+                                                </button>
+                                            );
+                                        })}
+                                        {(!problem?.referenceSolution || problem.referenceSolution.length === 0) && (
+                                            <div className="text-base-content/60 text-center py-4">
+                                                No solutions available
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Solution Content */}
+                                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                                        {(() => {
+                                            // Find the solution for the active tab
+                                            const activeSolution = problem?.referenceSolution?.find(
+                                                (item) => item.language.toLowerCase() === activeSolutionTab
+                                            );
+
+                                            if (activeSolution?.completeCode) {
+                                                // Get the language for syntax highlighting
+                                                const langForHighlighting = activeSolution.language.toLowerCase();
+                                                const markdown = `### ${activeSolution.language} Solution\n\n\`\`\`${langForHighlighting}\n${activeSolution.completeCode}\n\`\`\``;
+                                                return (
+                                                    <ReactMarkdown
+                                                        remarkPlugins={[remarkGfm]}
+                                                        rehypePlugins={[rehypeHighlight]}
+                                                    >
+                                                        {markdown}
+                                                    </ReactMarkdown>
+                                                );
+                                            } else if (problem?.referenceSolution && problem.referenceSolution.length > 0) {
+                                                return (
+                                                    <div className="text-base-content/60 text-center py-10">
+                                                        No solution available for this language.
+                                                    </div>
+                                                );
+                                            } else {
+                                                return (
+                                                    <div className="text-base-content/60 text-center py-10">
+                                                        No solution provided for this problem.
+                                                    </div>
+                                                );
+                                            }
+                                        })()}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* RIGHT PANEL: Editor */}
+            {/* ========== RIGHT PANEL (Editor & Bottom) ========== */}
             <div className="w-1/2 h-full flex flex-col bg-base-100">
                 {/* Toolbar */}
                 <div className="flex items-center justify-between p-3 border-b border-base-300 bg-base-200">
@@ -317,7 +544,7 @@ export default function ProblemCodeEditor() {
                     </div>
                 </div>
 
-                {/* Monaco Editor - uncontrolled, using defaultValue and onMount */}
+                {/* Monaco Editor */}
                 <div className="flex-1 min-h-0">
                     <Editor
                         height="100%"
@@ -336,7 +563,7 @@ export default function ProblemCodeEditor() {
                     />
                 </div>
 
-                {/* Bottom Panel (Test Cases & Output) - unchanged */}
+                {/* Bottom Panel (Test Cases & Output) */}
                 <div className="h-1/3 border-t border-base-300 bg-base-200 flex flex-col">
                     <div className="flex border-b border-base-300">
                         <button
@@ -451,7 +678,7 @@ export default function ProblemCodeEditor() {
                 </div>
             </div>
 
-            {/* Modal: Add Custom Test Case - unchanged */}
+            {/* Modal: Add Custom Test Case */}
             <dialog id="custom_test_modal" className="modal">
                 <div className="modal-box">
                     <h3 className="font-bold text-lg mb-4">Add Custom Test Case</h3>
