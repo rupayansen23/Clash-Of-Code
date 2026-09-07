@@ -48,6 +48,7 @@ const login = async (req, resp) => {
             firstName : user.firstName,
             lastName : user.lastName,
             emailId : user.emailId,
+            role : user.role,
             userId : user._id
         }
         resp.status(200).json({

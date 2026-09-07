@@ -15,7 +15,8 @@ authRouter.get("/check-auth", userMiddleWare, (req, resp)=>{
         firstName : req.user.firstName,
         lastName : req.user.lastName,
         email : req.user.emailId,
-        _id : req.user._id
+        _id : req.user._id,
+        role : req.user.role
     }
     resp.status(200).json({
         user : response,

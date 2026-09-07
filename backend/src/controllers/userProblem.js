@@ -160,9 +160,9 @@ const submittedProblem = async(req, resp) => {
         const userId = req.user._id;
         const problemId = req.params.pid;
         const answer = await Submission.find({userId, problemId});
-
+        console.log(answer);
         if(answer.length == 0) {
-            res.status(200).send("No submission present");
+            resp.status(200).send("No submission present");
         }
         resp.status(200).send(answer);
     }

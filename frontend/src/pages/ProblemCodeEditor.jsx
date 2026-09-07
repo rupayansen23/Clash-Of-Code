@@ -9,6 +9,7 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
 import axiosClient from "../utils/axiosClient";
+import SubmissionTab from "../components/SubmissionTab";
 
 // --- Zod Schema for Custom Test Case Form ---
 const testCaseSchema = z.object({
@@ -41,8 +42,6 @@ export default function ProblemCodeEditor() {
 
     // --- Left Panel Tabs ---
     const [activeLeftTab, setActiveLeftTab] = useState("description");
-    const [submissions, setSubmissions] = useState([]);
-    const [submissionsLoading, setSubmissionsLoading] = useState(false);
     const [solutions, setSolutions] = useState(null);
     const [activeSolutionTab, setActiveSolutionTab] = useState("cpp");
     const [solutionsLoading, setSolutionsLoading] = useState(false);
@@ -124,20 +123,7 @@ export default function ProblemCodeEditor() {
         editorRef.current = editor;
     };
 
-    // --- 5. Fetch Submissions when tab opens ---
-    const fetchSubmissions = async () => {
-        if (submissions.length > 0) return;
-        setSubmissionsLoading(true);
-        try {
-            const { data } = await axiosClient.get(`submission/user/submissions/${id}`);
-            setSubmissions(data);
-        } catch (error) {
-            console.error("Failed to fetch submissions:", error);
-        }
-        setSubmissionsLoading(false);
-    };
-
-    // --- 6. Fetch Solutions when tab opens ---
+    // --- 5. Fetch Solutions when tab opens ---
     const fetchSolutions = async () => {
         if (solutions) return;
         setSolutionsLoading(true);
@@ -159,7 +145,7 @@ export default function ProblemCodeEditor() {
         setSolutionsLoading(false);
     };
 
-    // --- 7. Handlers for Run and Submit ---
+    // --- 6. Handlers for Run and Submit ---
     const onRun = async () => {
         const code = editorRef.current?.getValue() || "";
         if (!code.trim()) return;
@@ -252,14 +238,14 @@ export default function ProblemCodeEditor() {
         setIsSubmitting(false);
     };
 
-    // --- 8. Add Custom Test Case ---
+    // --- 7. Add Custom Test Case ---
     const onAddCustomTestCase = (data) => {
         setTestCases((prev) => [...prev, { input: data.input, expected: data.expected }]);
         reset();
         document.getElementById("custom_test_modal").close();
     };
 
-    // --- 9. Helpers ---
+    // --- 8. Helpers ---
     const getDifficultyColor = (diff) => {
         switch (diff?.toLowerCase()) {
             case "easy": return "badge-success";
@@ -269,7 +255,7 @@ export default function ProblemCodeEditor() {
         }
     };
 
-    // --- 10. Loading & Error States ---
+    // --- 9. Loading & Error States ---
     if (loading) {
         return (
             <div className="flex items-center justify-center h-screen">
@@ -286,7 +272,7 @@ export default function ProblemCodeEditor() {
         );
     }
 
-    // --- 11. Main Render ---
+    // --- 10. Main Render ---
     return (
         <div className="flex h-screen overflow-hidden bg-base-200">
             {/* ========== LEFT PANEL with Tabs ========== */}
@@ -302,7 +288,6 @@ export default function ProblemCodeEditor() {
                                 }`}
                             onClick={() => {
                                 setActiveLeftTab(tab);
-                                if (tab === "submissions") fetchSubmissions();
                                 if (tab === "solutions") fetchSolutions();
                             }}
                         >
@@ -387,47 +372,7 @@ export default function ProblemCodeEditor() {
 
                     {/* --- SUBMISSIONS TAB --- */}
                     {activeLeftTab === "submissions" && (
-                        <div>
-                            <h2 className="text-2xl font-bold mb-4">Your Submissions</h2>
-                            {submissionsLoading ? (
-                                <div className="flex justify-center py-10">
-                                    <span className="loading loading-spinner loading-md"></span>
-                                </div>
-                            ) : submissions.length === 0 ? (
-                                <div className="text-base-content/60 text-center py-10">
-                                    No submissions yet for this problem.
-                                </div>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="table table-sm table-zebra">
-                                        <thead>
-                                            <tr>
-                                                <th>Status</th>
-                                                <th>Language</th>
-                                                <th>Runtime</th>
-                                                <th>Memory</th>
-                                                <th>Submitted At</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {submissions.map((sub, idx) => (
-                                                <tr key={idx}>
-                                                    <td>
-                                                        <span className={`badge ${sub.status === "accepted" ? "badge-success" : "badge-error"} badge-sm`}>
-                                                            {sub.status}
-                                                        </span>
-                                                    </td>
-                                                    <td>{sub.language}</td>
-                                                    <td>{sub.runtime ? `${sub.runtime}s` : "—"}</td>
-                                                    <td>{sub.memory ? `${(sub.memory / 1024).toFixed(1)} MB` : "—"}</td>
-                                                    <td>{new Date(sub.createdAt).toLocaleString()}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </div>
+                        <SubmissionTab problemId={id} />
                     )}
 
                     {/* --- SOLUTIONS TAB --- */}

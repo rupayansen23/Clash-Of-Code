@@ -17,7 +17,7 @@ export default function DeleteProblem() {
 
     const fetchProblems = async () => {
         try {
-            const { data } = await axiosClient.get('/problem/all');
+            const { data } = await axiosClient.get('/problem/getAllProblem');
             setProblems(data);
         } catch (error) {
             console.error('Failed to fetch problems:', error);
