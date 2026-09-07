@@ -4,6 +4,8 @@ import axiosClient from "../utils/axiosClient";
 export default function SubmissionTab({ problemId }) {
     const [submissions, setSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedSubmission, setSelectedSubmission] = useState(null);
+    const [showCodeModal, setShowCodeModal] = useState(false);
 
     useEffect(() => {
         const fetchSubmissions = async () => {
@@ -21,6 +23,11 @@ export default function SubmissionTab({ problemId }) {
 
         fetchSubmissions();
     }, [problemId]);
+
+    const handleViewCode = (submission) => {
+        setSelectedSubmission(submission);
+        setShowCodeModal(true);
+    };
 
     return (
         <div>
@@ -43,6 +50,7 @@ export default function SubmissionTab({ problemId }) {
                                 <th>Runtime</th>
                                 <th>Memory</th>
                                 <th>Submitted At</th>
+                                <th>Code</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -57,10 +65,67 @@ export default function SubmissionTab({ problemId }) {
                                     <td>{submission.runtime ? `${submission.runtime}s` : "-"}</td>
                                     <td>{submission.memory ? `${(submission.memory / 1024).toFixed(1)} MB` : "-"}</td>
                                     <td>{new Date(submission.createdAt).toLocaleString()}</td>
+                                    <td>
+                                        <button 
+                                            className="btn btn-xs btn-outline btn-primary"
+                                            onClick={() => handleViewCode(submission)}
+                                        >
+                                            View Code
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                </div>
+            )}
+
+            {/* Code Modal */}
+            {showCodeModal && selectedSubmission && (
+                <div className="modal modal-open">
+                    <div className="modal-box max-w-4xl">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-lg">
+                                Submitted Code
+                            </h3>
+                            <button 
+                                className="btn btn-sm btn-circle btn-ghost"
+                                onClick={() => setShowCodeModal(false)}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        
+                        <div className="mb-4 flex gap-4 text-sm text-base-content/70">
+                            <span>
+                                <strong>Language:</strong> {selectedSubmission.language}
+                            </span>
+                            <span>
+                                <strong>Status:</strong> 
+                                <span className={`badge ${selectedSubmission.status === "accepted" ? "badge-success" : "badge-error"} badge-sm ml-2`}>
+                                    {selectedSubmission.status}
+                                </span>
+                            </span>
+                            <span>
+                                <strong>Submitted:</strong> {new Date(selectedSubmission.createdAt).toLocaleString()}
+                            </span>
+                        </div>
+
+                        <div className="mockup-code bg-base-200 p-4 rounded-lg overflow-auto max-h-96">
+                            <pre className="whitespace-pre-wrap">
+                                <code>{selectedSubmission.code || "No code available"}</code>
+                            </pre>
+                        </div>
+
+                        <div className="modal-action">
+                            <button 
+                                className="btn"
+                                onClick={() => setShowCodeModal(false)}
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
