@@ -10,6 +10,7 @@ import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
 import axiosClient from "../utils/axiosClient";
 import SubmissionTab from "../components/SubmissionTab";
+import ChatWithAI from "../components/ChatWithAI";
 
 // --- Zod Schema for Custom Test Case Form ---
 const testCaseSchema = z.object({
@@ -279,7 +280,7 @@ export default function ProblemCodeEditor() {
             <div className="w-1/2 h-full flex flex-col bg-base-100 border-r border-base-300">
                 {/* Tab Bar */}
                 <div className="flex border-b border-base-300 bg-base-200">
-                    {["description", "submissions", "solutions"].map((tab) => (
+                    {["description", "submissions", "solutions", "Chat with AI"].map((tab) => (
                         <button
                             key={tab}
                             className={`px-4 py-2 text-sm font-medium capitalize ${activeLeftTab === tab
@@ -289,6 +290,7 @@ export default function ProblemCodeEditor() {
                             onClick={() => {
                                 setActiveLeftTab(tab);
                                 if (tab === "solutions") fetchSolutions();
+                                // if (tab === "Chat with AI") 
                             }}
                         >
                             {tab}
@@ -297,7 +299,7 @@ export default function ProblemCodeEditor() {
                 </div>
 
                 {/* Tab Content */}
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="relative flex-1 overflow-y-auto p-6">
                     {/* --- DESCRIPTION TAB --- */}
                     {activeLeftTab === "description" && (
                         <>
@@ -373,6 +375,11 @@ export default function ProblemCodeEditor() {
                     {/* --- SUBMISSIONS TAB --- */}
                     {activeLeftTab === "submissions" && (
                         <SubmissionTab problemId={id} />
+                    )}
+
+                    {/* ---- Chat with AI TAB--------- */}
+                    {activeLeftTab === "Chat with AI" && (
+                        <ChatWithAI problem={problem}/>
                     )}
 
                     {/* --- SOLUTIONS TAB --- */}
