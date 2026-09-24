@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import axiosClient from "../utils/axiosClient";
 import { Bot, Send } from 'lucide-react';
-import remarkGfm from 'remark-gfm'; 
-import ReactMarkdown from "react-markdown" 
+import remarkGfm from 'remark-gfm';
+import ReactMarkdown from "react-markdown"
 
 export default function ChatAi({ problem }) {
     const [messages, setMessages] = useState([
@@ -73,7 +73,7 @@ export default function ChatAi({ problem }) {
                         className={`chat ${msg.role === "user" ? "chat-end" : "chat-start"}`}
                     >
                         <div className="chat-bubble bg-base-200 text-base-content [&>p]:m-0 [&>ul]:list-disc [&>ul]:ml-4t">
-                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                 {msg.parts[0].text}
                             </ReactMarkdown>
                         </div>

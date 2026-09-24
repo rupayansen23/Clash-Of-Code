@@ -280,7 +280,7 @@ export default function ProblemCodeEditor() {
             <div className="w-1/2 h-full flex flex-col bg-base-100 border-r border-base-300">
                 {/* Tab Bar */}
                 <div className="flex border-b border-base-300 bg-base-200">
-                    {["description", "submissions", "solutions", "Chat with AI"].map((tab) => (
+                            {["description", "submissions", "solutions", "editorial", "Chat with AI"].map((tab) => (
                         <button
                             key={tab}
                             className={`px-4 py-2 text-sm font-medium capitalize ${activeLeftTab === tab

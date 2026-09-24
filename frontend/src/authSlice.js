@@ -30,6 +30,7 @@ export const checkAuth = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const { data } = await axiosClient.get('/user/check-auth');
+            console.log(data);
             return data.user;
         } catch (error) {
             return rejectWithValue(error);

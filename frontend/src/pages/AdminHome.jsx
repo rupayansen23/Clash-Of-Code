@@ -1,8 +1,7 @@
 import React from 'react';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Video } from 'lucide-react';
 import { NavLink } from 'react-router';
 import Navbar from '../components/Navbar';
-
 
 function Admin() {
   const adminOptions = [
@@ -32,6 +31,15 @@ function Admin() {
       color: 'btn-error',
       bgColor: 'bg-error/10',
       route: '/admin/delete'
+    },
+    {
+      id: 'uploadVideo',
+      title: 'Upload Video Solution',
+      description: 'Upload a video soloution for a perticular problem',
+      icon: Video,
+      color: 'btn-success',
+      bgColor: 'bg-success/10',
+      route: '/admin/video'
     }
   ];
 
