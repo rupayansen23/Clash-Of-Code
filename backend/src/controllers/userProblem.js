@@ -3,6 +3,7 @@ const Problem = require("../models/problem");
 const User = require("../models/user");
 const { findById } = require("../models/user");
 const Submission = require("../models/submissions");
+const SolutionVideo = require("../models/solutionVideo");
 
 
 const problemCreate = async (req, resp) => {
@@ -52,6 +53,8 @@ const problemCreate = async (req, resp) => {
 };
 
 const updateProblem = async(req, resp) => {
+
+    console.log("Hii");
     const {id} = req.params;
     const {title, description, difficulty, tags,
         visibleTestCases, invisibleTestCases, startCode, 
@@ -89,6 +92,7 @@ const updateProblem = async(req, resp) => {
 
         }   
         const updatedProblem = await Problem.findByIdAndUpdate(id, {...req.body}, {runValidators:true, new:true})
+        console.log(updateProblem);
         resp.status(200).send(updatedProblem);
     }
     catch(error) {
@@ -122,7 +126,20 @@ const getProblemById = async(req, resp) => {
         const getProblem = await Problem.findById(id).select('_id title description difficulty tags visibleTestCases startCode referenceSolution');
         if(getProblem.length==0) 
             return resp.status("problem is missing");
-        resp.status(200).send(getProblem);
+        const video = await SolutionVideo.findOne({problemId:id})
+        if(video) {
+            const responseData = {
+                ...getProblem.toObject(),
+                secureUrl : video.secureUrl,
+                thumbailUrl : video.thumbnailUrl,
+                duration : video.duration
+            }
+            resp.status(200).send(responseData);
+        }
+        else {
+            resp.status(200).send(getProblem);
+        }
+        
     }
     catch(error) {
         return resp.status(500).send("Error : "+error)

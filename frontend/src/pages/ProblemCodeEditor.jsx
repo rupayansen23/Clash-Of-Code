@@ -11,6 +11,7 @@ import "highlight.js/styles/github-dark.css";
 import axiosClient from "../utils/axiosClient";
 import SubmissionTab from "../components/SubmissionTab";
 import ChatWithAI from "../components/ChatWithAI";
+import Editorial from "../components/Editorial";
 
 // --- Zod Schema for Custom Test Case Form ---
 const testCaseSchema = z.object({
@@ -80,7 +81,6 @@ export default function ProblemCodeEditor() {
         const fetchProblem = async () => {
             try {
                 const { data } = await axiosClient.get(`problem/getProblemById/${id}`);
-                console.log(data);
                 setProblem(data);
                 setTestCases(
                     data.visibleTestCases?.map((tc) => ({
@@ -380,6 +380,14 @@ export default function ProblemCodeEditor() {
                     {/* ---- Chat with AI TAB--------- */}
                     {activeLeftTab === "Chat with AI" && (
                         <ChatWithAI problem={problem}/>
+                    )}
+
+                    {activeLeftTab === "editorial" && (
+                        <Editorial
+                            secureUrl={problem.secureUrl}
+                            thumbnailUrl={problem.thumbnailUrl}
+                            duration={problem.duration}
+                        />
                     )}
 
                     {/* --- SOLUTIONS TAB --- */}

@@ -11,6 +11,7 @@ import AdminHome from './pages/AdminHome'
 import CreateProblem from './components/CreateProblem'
 import DeleteProblem from './components/DeleteProblem'
 import UpdateProblem from './components/UpdateProblem'
+import UpdateProblemForm from './components/UpdateProblemForm'
 import { Delete } from 'lucide-react'
 import AdminVideo from './components/AdminVideo'
 import AdminVideoUpload from './components/AdminVideoUpload'
@@ -51,6 +52,7 @@ function App() {
         <Route path="/admin" element={isAuthenticated && user?.role === 'admin' ? <AdminHome /> : <Navigate to="/" />}></Route>
         <Route path="/admin/create" element={isAuthenticated && user?.role === 'admin' ? <CreateProblem /> : <Navigate to="/" />}></Route>
         <Route path="/admin/update" element={isAuthenticated && user?.role === 'admin' ? <UpdateProblem /> : <Navigate to="/" />}></Route>
+        <Route path="/admin/update/:id" element={isAuthenticated && user?.role === 'admin' ? <UpdateProblemForm /> : <Navigate to="/" />}></Route>
         <Route path="/admin/delete" element={isAuthenticated && user?.role === 'admin' ? <DeleteProblem /> : <Navigate to="/" />}></Route>
         <Route path="/admin/video" element={isAuthenticated && user?.role === 'admin' ? <AdminVideo/> : <Navigate to="/" />}></Route>
         <Route path="/admin/upload/:problemId" element={isAuthenticated && user?.role === 'admin' ? <AdminVideoUpload/> : <Navigate to="/" />}></Route>
