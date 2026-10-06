@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import './App.css'
 import { Routes, Route, Navigate } from 'react-router'
 import HomePage from './pages/Homepage'
@@ -12,21 +12,27 @@ import CreateProblem from './components/CreateProblem'
 import DeleteProblem from './components/DeleteProblem'
 import UpdateProblem from './components/UpdateProblem'
 import UpdateProblemForm from './components/UpdateProblemForm'
-import { Delete } from 'lucide-react'
 import AdminVideo from './components/AdminVideo'
 import AdminVideoUpload from './components/AdminVideoUpload'
 
-function App() {
+export default function App() {
 
-  const { isAuthenticated, loading, user } = useSelector((state) => state.auth)
+  const { isAuthenticated, loading, user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
-  const [authChecked, setAuthChecked] = useState(false);
+  const didCheck = useRef(false);          // ← NEW
+   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
+    if (didCheck.current) return;           // ← skip 2nd run in StrictMode
+    didCheck.current = true;
     const checkAuthStatus = async () => {
-      await dispatch(checkAuth());
-      setAuthChecked(true);
+      try {
+        await dispatch(checkAuth());
+      } finally {
+        setAuthChecked(true);
+      }
     };
+
     checkAuthStatus();
   }, [dispatch]);
 
@@ -61,4 +67,4 @@ function App() {
   )
 }
 
-export default App
+

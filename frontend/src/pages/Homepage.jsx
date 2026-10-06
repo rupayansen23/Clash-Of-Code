@@ -14,10 +14,13 @@ export default function Homepage() {
         status: 'all'
     });
 
+    console.log(user);
+
     useEffect(() => {
         const fetchProblems = async () => {
             try {
                 const { data } = await axiosClient.get('/problem/getAllProblem');
+                //console.log(data);
                 setProblems(data);
             } catch (error) {
                 console.error('Error fetching problems:', error);

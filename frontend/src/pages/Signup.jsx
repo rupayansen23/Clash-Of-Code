@@ -3,8 +3,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { negative, z } from 'zod';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate, useNavigate, NavLink } from 'react-router';
-import { registerUser, clearError } from '../authSlice';
+import { useNavigate, NavLink } from 'react-router';
+import { GoogleLogin } from '@react-oauth/google';
+import { registerUser, clearError, googleLogin } from '../authSlice';
 import { useState } from 'react';
 
 const signupSchema = z.object({
@@ -43,6 +44,12 @@ export default function Signup() {
 
     const onSubmit = (data) => {
         dispatch(registerUser(data));
+    };
+
+    const handleGoogleSuccess = ({ credential }) => {
+      if (credential) {
+        dispatch(googleLogin(credential));
+      }
     };
 
     return (
@@ -130,6 +137,15 @@ export default function Signup() {
                       </button>
                     </div>
                   </form>
+                  {error && <p className="text-error text-sm text-center mt-4">{error}</p>}
+                  <div className="divider my-4">OR</div>
+                  <div className="flex justify-center">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={() => console.error('Google registration failed')}
+                      text="signup_with"
+                    />
+                  </div>
         
                   {/* Login Redirect */}
                   <div className="text-center mt-6"> {/* Increased mt for spacing */}

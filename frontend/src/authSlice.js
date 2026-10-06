@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import axios from 'axios';
 import axiosClient from './utils/axiosClient'
 
 export const registerUser = createAsyncThunk(
@@ -25,6 +26,22 @@ export const loginUser = createAsyncThunk(
     }
 );
 
+export const googleLogin = createAsyncThunk(
+    'auth/googleLogin',
+    async (credential, { rejectWithValue }) => {
+        try {
+            // Uses baseURL ("http://localhost:3000") and withCredentials: true automatically
+            const response = await axiosClient.post('/user/googleRegister', { credential });
+
+            // Cookie is set automatically by the browser via the response headers
+            return response.data.user;
+        } catch (error) {
+            return rejectWithValue(
+                error.response?.data?.message || error.response?.data || 'Google login failed'
+            );
+        }
+    }
+);
 export const checkAuth = createAsyncThunk(
     'auth/check',
     async (_, { rejectWithValue }) => {
@@ -96,6 +113,23 @@ const authSlice = createSlice({
         .addCase(loginUser.rejected, (state, action) => {
             state.loading = false;
             state.error = action.payload?.message || 'Something went wrong';
+            state.isAuthenticated = false;
+            state.user = null;
+        })
+
+        // Google Login Cases
+        .addCase(googleLogin.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(googleLogin.fulfilled, (state, action) => {
+            state.loading = false;
+            state.isAuthenticated = !!action.payload;
+            state.user = action.payload;
+        })
+        .addCase(googleLogin.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload?.message || 'Google login failed';
             state.isAuthenticated = false;
             state.user = null;
         })

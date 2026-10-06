@@ -4,7 +4,10 @@ const redisClient = require("../config/redis");
 
 const userMiddleWare = async (req, resp, next)=>{
     try {
+        console.log(req);
+        console.log(req.cookies);
         const {token} = req.cookies;
+        console.log(token);
         if(!token) {
             throw new Error("Token is not present");
         }
@@ -29,6 +32,7 @@ const userMiddleWare = async (req, resp, next)=>{
         next();
     }
     catch(err) {
+        console.log(err);
         resp.send("Error Message : "+err);
     }
 }

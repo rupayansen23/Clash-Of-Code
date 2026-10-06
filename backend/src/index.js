@@ -9,9 +9,9 @@ const problemRouter = require("./routes/problemCreator");
 const submitRouter = require("./routes/submit");
 const aiChatRouter = require("./routes/aichatRouter");
 const videoRouter = require("./routes/videoRouter");
-const cros = require('cors');
+const cors = require('cors')
 
-app.use(cros({
+app.use(cors({
     origin : 'http://localhost:5173',
     credentials : true
 }))
